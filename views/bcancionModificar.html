@@ -4,7 +4,8 @@
 
 {% block contenido_principal %}
   <h2>Modificar canción</h2>
-  <form class="form-horizontal" method="post" action="/cancion/modificar/{{ cancion._id.toString() }}" encType="multipart/form-data">
+  <form class="form-horizontal" method="post" action="/cancion/modificar/{{ cancion._id.toString() }}"
+        encType="multipart/form-data">
     <div class="form-group">
       <label class="control-label col-sm-2" for="nombre">Nombre:</label>
       <div class="col-sm-10">
