@@ -37,11 +37,19 @@ module.exports = function(app, swig, gestorBD) {
             if ( canciones == null ){
                 res.send("Error al recuperar la canción.");
             } else {
-                let respuesta = swig.renderFile('views/bcancion.html',
-                    {
-                        cancion : canciones[0]
-                    });
-                res.send(respuesta);
+                let criterio_comentario = { "cancion_id" : gestorBD.mongo.ObjectID(req.params.id)  };
+                gestorBD.obtenerComentarios(criterio_comentario, function(comentarios) {
+                   if(comentarios == null){
+                       res.send("Error al recuperar los comentarios.");
+                   } else {
+                       let respuesta = swig.renderFile('views/bcancion.html',
+                           {
+                               cancion : canciones[0],
+                               comentarios : comentarios
+                           });
+                       res.send(respuesta);
+                   }
+                });
             }
         });
     });
@@ -163,7 +171,7 @@ module.exports = function(app, swig, gestorBD) {
         } else {
             paso2ModificarAudio(files, id, callback); // SIGUIENTE
         }
-    };
+    }
     function paso2ModificarAudio(files, id, callback){
         if (files && files.audio != null) {
             let audio = files.audio;
@@ -177,6 +185,6 @@ module.exports = function(app, swig, gestorBD) {
         } else {
             callback(true); // FIN
         }
-    };
+    }
 
 };
