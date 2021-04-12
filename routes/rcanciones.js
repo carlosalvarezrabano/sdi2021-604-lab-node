@@ -59,12 +59,15 @@ module.exports = function(app, swig, gestorBD) {
                    if(comentarios == null){
                        res.send("Error al recuperar los comentarios.");
                    } else {
-                       let respuesta = swig.renderFile('views/bcancion.html',
-                           {
-                               cancion : canciones[0],
-                               comentarios : comentarios
-                           });
-                       res.send(respuesta);
+                       usuarioPuedeComprarCancion(req.session.usuario, criterio, function(comprar) {
+                           let respuesta = swig.renderFile('views/bcancion.html',
+                               {
+                                   cancion : canciones[0],
+                                   comentarios : comentarios,
+                                   comprar : comprar
+                               });
+                           res.send(respuesta);
+                       });
                    }
                 });
             }
@@ -187,11 +190,18 @@ module.exports = function(app, swig, gestorBD) {
             usuario : req.session.usuario,
             cancionId : cancionId
         }
-        gestorBD.insertarCompra(compra ,function(idCompra){
-            if ( idCompra == null ){
-                res.send(respuesta);
-            } else {
-                res.redirect("/compras");
+        usuarioPuedeComprarCancion(req.session.usuario, cancionId, function(comprar) {
+            if(comprar) {
+                gestorBD.insertarCompra(compra ,function(idCompra){
+                    if ( idCompra == null ){
+                        res.send(respuesta);
+                    } else {
+                        res.redirect("/compras");
+                    }
+                });
+            }
+            else {
+                res.send("Error: no puedes comprar esta canción")
             }
         });
     });
@@ -252,6 +262,27 @@ module.exports = function(app, swig, gestorBD) {
         } else {
             callback(true); // FIN
         }
+    }
+
+    function usuarioPuedeComprarCancion(usuario, cancionId, functionCallback) {
+        let criterio_micancion = { $and: [{"_id" : cancionId}, {"autor" : usuario}] };
+        let criterio_cancioncomprada = { $and: [{"_id" : cancionId}, {"usuario" : usuario}] };
+
+        gestorBD.obtenerCanciones(criterio_micancion, function(canciones) {
+           if(canciones != null || canciones.length > 0) {
+               functionCallback(false);
+           }
+           else {
+               gestorBD.obtenerCompras(criterio_cancioncomprada, function(compras) {
+                  if(compras != null || compras.length > 0) {
+                      functionCallback(false);
+                  }
+                  else {
+                      functionCallback(true);
+                  }
+               });
+           }
+        });
     }
 
 };
